@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Analytics Pro - Persistent Data | Grocery & Fresho</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #0f172a; 
+            --accent: #2563eb; 
+            --highlight: #fef08a; 
+            --light-yellow: #fff9c4;
+            --major-color: #be123c;
+            --monthly-color: #059669;
+            --demand-color: #7c3aed;
+            --price-color: #0284c7; 
+            --category-text: #1e40af; 
+            --fb-color: #1877f2;
+            --cust-color: #db2777;
+            --staff-color: #ea580c;
+            --groc-color: #16a34a;
+            --fresh-color: #65a30d;
+            --bill-color: #4f46e5;
+            --maint-color: #854d0e;
+        }
+        body { font-family: 'Inter', sans-serif; background: #cbd5e1; margin: 0; padding: 10px; color: var(--primary); }
+        .tabs-container { max-width: 950px; margin: 0 auto; }
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 10px; background: #1e293b; padding: 10px; border-radius: 12px; flex-wrap: wrap; }
+        .tab-btn { padding: 12px 25px; border: none; background: #334155; color: white; cursor: pointer; border-radius: 8px; font-weight: 800; transition: 0.3s; }
+        .tab-btn.active { background: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .admin-panel { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .input-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px; }
+        textarea { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; font-family: inherit; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-weight: 600; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        button.action-btn { flex: 1; padding: 16px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; min-width: 140px; }
+        .btn-add { background: var(--accent); color: white; }
+        .btn-img { background: var(--primary); color: white; }
+        .btn-major { background: var(--major-color); color: white; }
+        .btn-summary { background: #64748b; color: white; }
+        .btn-monthly { background: var(--monthly-color); color: white; }
+        .btn-demand { background: var(--demand-color); color: white; }
+        .btn-price { background: var(--price-color); color: white; }
+        .btn-fb { background: var(--fb-color); color: white; }
+        .btn-cust { background: var(--cust-color); color: white; }
+        .btn-staff { background: var(--staff-color); color: white; }
+        .btn-groc { background: var(--groc-color); color: white; }
+        .btn-fresh { background: var(--fresh-color); color: white; }
+        .btn-bill { background: var(--bill-color); color: white; }
+        .btn-maint { background: var(--maint-color); color: white; }
+        .btn-undo { background: #f97316; color: white; font-size: 11px; padding: 10px 15px !important; width: auto !important; flex: none !important; margin-left: 10px; }
+        .btn-clear { background: #000; color: white; font-size: 11px; padding: 10px 15px !important; width: auto !important; flex: none !important; margin-left: 10px; }
+        .report-preview-area { width: 100%; background: white; padding: 30px; box-sizing: border-box; position: relative; border-radius: 8px; margin-top: 15px; }
+        .report-preview-area::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; background: var(--accent); border-radius: 8px 8px 0 0; }
+        .major-area::before { background: var(--major-color); }
+        .monthly-area::before { background: var(--monthly-color); }
+        .demand-area::before { background: var(--demand-color); }
+        .price-area::before { background: var(--price-color); }
+        .fb-area::before { background: var(--fb-color); }
+        .cust-area::before { background: var(--cust-color); }
+        .staff-area::before { background: var(--staff-color); }
+        .groc-area::before { background: var(--groc-color); }
+        .fresh-area::before { background: var(--fresh-color); }
+        .bill-area::before { background: var(--bill-color); }
+        .maint-area::before { background: var(--maint-color); }
+        .report-header { border-bottom: 3px solid var(--primary); margin-bottom: 20px; padding-bottom: 10px; }
+        .report-header h1 { margin: 0; font-size: 22px; font-weight: 800; color: #1e293b; letter-spacing: -0.5px; }
+        .meta-date { text-align: right; font-size: 14px; font-weight: 800; color: var(--accent); margin-bottom: 15px; }
+        .main-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 2px solid #000; table-layout: fixed; }
+        .main-table th { background: #f8fafc; padding: 8px 6px; font-size: 11px; border: 1.5px solid #000; text-align: left; font-weight: 900; letter-spacing: -0.2px; }
+        .main-table td { padding: 8px 6px; border: 1.5px solid #000; font-size: 12px; font-weight: 700; vertical-align: middle; word-wrap: break-word; line-height: 1.3; }
+        .category-heading td { background-color: #f1f5f9 !important; color: var(--category-text) !important; font-weight: 900 !important; text-transform: uppercase; border: 2px solid #000 !important; padding: 10px 6px !important; font-size: 13px !important; }
+        .high-complaint-row { background-color: var(--light-yellow) !important; }
+        mark { background-color: var(--highlight); color: black; padding: 1px 3px; border-radius: 3px; font-weight: 800; }
+        .status-toggle-btn { width: 100%; padding: 5px 2px; border-radius: 4px; border: none; font-weight: 900; font-size: 11px; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .status-uploaded { background: #dcfce7; color: #166534; border: 1px solid #166534; }
+        .status-unuploaded { background: #fee2e2; color: #be123c; border: 1px solid #be123c; }
+        .analytics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .stat-card { border: 2px solid #000; padding: 10px; text-align: center; border-radius: 6px; }
+        .stat-card small { font-size: 10px; font-weight: 900; display: block; color: #64748b; }
+        .stat-card div { font-size: 20px; font-weight: 900; }
+        .summary-box { grid-column: span 3; border: 2px solid #000; padding: 12px; background: #f0fdf4; border-radius: 8px; font-size: 12px; }
+        .percentage-section { margin-top: 15px; padding: 12px; border: 2px solid #000; border-radius: 8px; }
+        .percent-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; font-size: 12px; font-weight: 700; }
+        .footer-line { margin-top: 25px; text-align: center; font-size: 10px; font-weight: 700; opacity: 0.5; }
+        .hidden { display: none; }
+        .control-bar { display: flex; align-items: center; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+        .filter-select { width: 160px; padding: 8px; border: 2px solid var(--fb-color); border-radius: 8px; font-weight: 800; background: #fff; }
+        .btn-del-row { background: #be123c; color: white; border: none; padding: 3px 6px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 800; }
+        .count-footer-wrapper { margin-top: 15px; border: 2px solid #000; padding: 10px; border-radius: 6px; background: #f8fafc; font-weight: 900; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
+        .days-counter-badge { background: var(--accent); color: white; padding: 4px 10px; border-radius: 50px; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+        .date-badge { background: #e2e8f0; color: #334155; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-right: 4px; display: inline-block; border: 1px solid #cbd5e1; text-transform: none; }
+        @media print { body { background: white; padding: 0; } .admin-panel, .tab-buttons, .control-bar, .hide-on-download { display: none !important; } .report-preview-area { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; } .tab-content { display: block !important; } .tab-content:not(.active) { display: none !important; } }
+    </style>
+</head>
+<body>
+<div class="tabs-container">
+    <div class="tab-buttons">
+        <button class="tab-btn active" onclick="openTab(event, 'tab1')">TAB 1</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab2')">TAB 2</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab3')">TAB 3</button>
+        <button class="tab-btn" onclick="openTab(event, 'tab4')">TAB 4</button>
+        <button class="tab-btn" style="background: var(--fb-color);" onclick="openTab(event, 'tabFacebook')">FACEBOOK</button>
+    </div>
+    <div id="tab1" class="tab-content active"></div>
+    <div id="tab2" class="tab-content"></div>
+    <div id="tab3" class="tab-content"></div>
+    <div id="tab4" class="tab-content"></div>
+    <div id="tabFacebook" class="tab-content">
+        <div class="admin-panel" style="border-top: 5px solid var(--fb-color);">
+            <h2 style="margin-top:0; font-weight: 800; color: var(--fb-color);">FACEBOOK MANAGEMENT CONSOLE</h2>
+            <div class="input-row">
+                <select id="fbTargetPage"><option value="mpk">MPK Page</option><option value="hyd">HYD Page</option></select>
+                <input type="date" id="fbDateInput">
+                <select id="fbStatusInput"><option value="Uploaded">Uploaded</option><option value="Unuploaded">Unuploaded</option></select>
+            </div>
+            <div class="btn-group"><button class="action-btn btn-fb" onclick="switchFbPage('mpk')">View MPK Page</button><button class="action-btn btn-fb" onclick="switchFbPage('hyd')">View HYD Page</button><button class="action-btn btn-add" style="background: var(--fb-color);" onclick="processFbData()">Add Entry</button></div>
+        </div>
+        <div id="fbPageMpk"><div class="control-bar"><select id="fbMpkMonthFilter" class="filter-select" onchange="renderFbTables()"><option value="all">All Months</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select><button class="action-btn btn-img" style="width:220px; background:var(--fb-color)" onclick="downloadImage('fbAreaMpk')">Download MPK PNG (HD)</button><button class="action-btn btn-undo" onclick="undoLastFbEntry('mpk')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearFbData('mpk')">CLEAR ALL MPK</button></div><div id="fbAreaMpk" class="report-preview-area fb-area"><div class="report-header" style="border-bottom-color:var(--fb-color)"><h1>FACEBOOK PRICE LIST UPDATE - MPK PAGE</h1></div><div class="analytics-grid" style="margin-bottom:20px;"><div class="stat-card" style="border-color: #166534;"><small>TOTAL UPLOADED</small><div id="mpkUploadCount" style="color:#166534">0</div></div><div class="stat-card" style="border-color: #be123c;"><small>TOTAL UNUPLOADED</small><div id="mpkUnuploadCount" style="color:#be123c">0</div></div></div><table class="main-table"><thead><tr><th style="width: 30%;">DATE</th><th style="width: 30%;">PAGE</th><th style="width: 25%; text-align: center;">STATUS</th><th class="hide-on-download" style="width: 15%; text-align: center;">DEL</th></tr></thead><tbody id="fbMpkTableBody"></tbody></table><div class="footer-line">Facebook Operations Audit • Confidential</div></div></div>
+        <div id="fbPageHyd" class="hidden"><div class="control-bar"><select id="fbHydMonthFilter" class="filter-select" onchange="renderFbTables()"><option value="all">All Months</option><option value="01">January</option><option value="02">February</option><option value="03">March</option><option value="04">April</option><option value="05">May</option><option value="06">June</option><option value="07">July</option><option value="08">August</option><option value="09">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select><button class="action-btn btn-img" style="width:220px; background:var(--price-color)" onclick="downloadImage('fbAreaHyd')">Download HYD PNG (HD)</button><button class="action-btn btn-undo" onclick="undoLastFbEntry('hyd')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearFbData('hyd')">CLEAR ALL HYD</button></div><div id="fbAreaHyd" class="report-preview-area fb-area"><div class="report-header" style="border-bottom-color:var(--fb-color)"><h1>FACEBOOK PRICE LIST UPDATE - HYD PAGE</h1></div><div class="analytics-grid" style="margin-bottom:20px;"><div class="stat-card" style="border-color: #166534;"><small>TOTAL UPLOADED</small><div id="hydUploadCount" style="color:#166534">0</div></div><div class="stat-card" style="border-color: #be123c;"><small>TOTAL UNUPLOADED</small><div id="hydUnuploadCount" style="color:#be123c">0</div></div></div><table class="main-table"><thead><tr><th style="width: 30%;">DATE</th><th style="width: 30%;">PAGE</th><th style="width: 25%; text-align: center;">STATUS</th><th class="hide-on-download" style="width: 15%; text-align: center;">DEL</th></tr></thead><tbody id="fbHydTableBody"></tbody></table><div class="footer-line">Facebook Operations Audit • Confidential</div></div></div>
+    </div>
+</div>
+<script>
+    const STORAGE_VERSION = "branch_data_v2_"; 
+    const globalDataStore = {};
+
+    function saveBranchToLocalStorage(branchId) {
+        if (globalDataStore[branchId]) {
+            localStorage.setItem(STORAGE_VERSION + branchId, JSON.stringify(globalDataStore[branchId]));
+        }
+    }
+
+    function loadBranchFromLocalStorage(branchId) {
+        const saved = localStorage.getItem(STORAGE_VERSION + branchId);
+        const defaultCategories = {
+            monthly: [], major: [], demand: [], price: [], cust: [], staff: [], grocery: [], fresho: [], bill: [], maint: []
+        };
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                for (let key in defaultCategories) {
+                    if (!parsed[key]) parsed[key] = [];
+                }
+                globalDataStore[branchId] = parsed;
+            } catch(e) { globalDataStore[branchId] = { ...defaultCategories }; }
+        } else {
+            globalDataStore[branchId] = { ...defaultCategories };
+        }
+    }
+
+    function initStoreForBranch(branchId) {
+        if (!globalDataStore[branchId]) {
+            loadBranchFromLocalStorage(branchId);
+        }
+    }
+
+    function refreshAllBranchViews(branchId) {
+        if (!globalDataStore[branchId]) return;
+        renderGroupedMonthlyTable(branchId);
+        renderAllTables(branchId);
+    }
+
+    const getBranchNum = (id) => id.replace('tab', '');
+    
+    function buildBranchTemplate(id) {
+        const bNum = getBranchNum(id);
+        return `<div class="admin-panel"><h2 style="margin-top:0; font-weight: 800; color: var(--accent);">REPORT CONSOLE (BRANCH ${bNum})</h2><div class="input-row"><input type="text" id="branchInput_${id}" placeholder="Main Heading (Dates)"><input type="date" id="dateInput_${id}"><input type="number" id="totalFeedbackInput_${id}" placeholder="Total Overall FB"></div><textarea id="bulkInput_${id}" rows="8" placeholder="Category Name\nProduct. Reason"></textarea><textarea id="goodCommentsInput_${id}" rows="2" placeholder="Summary / Remarks..."></textarea><div class="btn-group"><button class="action-btn btn-summary" onclick="switchPage('${id}', 'summary')">Summary Report</button><button class="action-btn btn-monthly" onclick="switchPage('${id}', 'monthly')">Monthly Data</button><button class="action-btn btn-major" onclick="switchPage('${id}', 'major')">Major Complaints</button><button class="action-btn btn-demand" onclick="switchPage('${id}', 'demand')">Demands & Stock</button><button class="action-btn btn-price" onclick="switchPage('${id}', 'price')">Price Issues</button><button class="action-btn btn-cust" onclick="switchPage('${id}', 'cust')">Satisfaction</button><button class="action-btn btn-staff" onclick="switchPage('${id}', 'staff')">Staff</button><button class="action-btn btn-groc" onclick="switchPage('${id}', 'grocery')">Grocery</button><button class="action-btn btn-fresh" onclick="switchPage('${id}', 'fresho')">Fresho</button><button class="action-btn btn-bill" onclick="switchPage('${id}', 'bill')">Billing</button><button class="action-btn btn-maint" onclick="switchPage('${id}', 'maint')">Maintenance</button><button class="action-btn btn-add" onclick="processData('${id}')">Generate Report</button></div></div><div id="pageSummary_${id}"><button class="action-btn btn-img" style="margin-bottom:10px; width:200px" onclick="downloadImage('pdfArea_${id}')">Download PNG (HD)</button><div id="pdfArea_${id}" class="report-preview-area"><div class="report-header"><h1 id="mainHeading_${id}">ANALYSIS REPORT</h1></div><div class="meta-date">DATE: <span id="outDate_${id}">--/--/----</span></div><table class="main-table"><thead><tr><th style="width: 35%;">PRODUCT</th><th style="width: 15%; text-align: center;">QTY</th><th style="width: 50%;">REASONS / COMPLAINTS</th></tr></thead><tbody id="tableBody_${id}"></tbody></table><div class="analytics-grid"><div class="stat-card"><small>TOTAL ISSUES</small><div id="outTotalComplaints_${id}">0</div></div><div class="stat-card"><small>TOTAL FB</small><div id="outTotalAll_${id}">0</div></div><div class="stat-card"><small>SCORE</small><div id="outSatRate_${id}" style="color:var(--accent)">0%</div></div><div class="summary-box"><small style="font-weight:900; color:#166534">SUMMARY & REMARKS</small><p id="outGoodComments_${id}">...</p></div></div><div class="percentage-section"><h3 style="margin:0 0 10px; font-size:13px; font-weight:900;">ISSUE DISTRIBUTION</h3><div id="percentageList_${id}"></div></div><div class="footer-line">Analytical Intelligence System • Confidential</div></div></div><div id="pageMonthly_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--monthly-color)" onclick="downloadPDF()">Download Monthly PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'monthly')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'monthly')">CLEAR ALL</button></div><div id="monthlyArea_${id}" class="report-preview-area monthly-area"><div class="report-header" style="border-bottom-color:var(--monthly-color)"><h1 id="monthlyHeading_${id}">BRANCH ${bNum} MONTHLY DATA</h1></div><table class="main-table" id="monthlyTable_${id}"><thead><tr><th style="width: 20%;">DATE(S)</th><th style="width: 30%;">PRODUCT NAME</th><th style="width: 12%; text-align: center;">TOTAL QTY</th><th style="width: 30%;">REASONS (UNIQUE)</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="monthlyTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL COMPLAINTS (AGGREGATED): <span id="monthlyTotalCount_${id}">0</span></span><span class="days-counter-badge" id="monthlyDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Daily Operations Log • Grouped by Product</div></div></div><div id="pageMajor_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--major-color)" onclick="downloadPDF()">Download Major PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'major')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'major')">CLEAR ALL</button></div><div id="majorArea_${id}" class="report-preview-area major-area"><div class="report-header" style="border-bottom-color:var(--major-color)"><h1 id="majorHeading_${id}">BRANCH ${bNum} MAJOR COMPLAINTS</h1></div><table class="main-table"><thead><tr><th style="width: 20%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 37%;">COMPLAINT DETAILS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="majorTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL MAJOR COMPLAINTS: <span id="majorTotalCount_${id}">0</span></span><span class="days-counter-badge" id="majorDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Monthly Grievance Audit • Confidential</div></div></div><div id="pageDemand_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--demand-color)" onclick="downloadPDF()">Download Demand PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'demand')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'demand')">CLEAR ALL</button></div><div id="demandArea_${id}" class="report-preview-area demand-area"><div class="report-header" style="border-bottom-color:var(--demand-color)"><h1 id="demandHeading_${id}">BRANCH ${bNum} DEMANDS & STOCK</h1></div><table class="main-table"><thead><tr><th style="width: 20%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 37%;">REASON / STATUS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="demandTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL DEMAND COMPLAINTS: <span id="demandTotalCount_${id}">0</span></span><span class="days-counter-badge" id="demandDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Live Demand Tracking • Confidential</div></div></div><div id="pagePrice_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--price-color)" onclick="downloadPDF()">Download Price PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'price')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'price')">CLEAR ALL</button></div><div id="priceArea_${id}" class="report-preview-area price-area"><div class="report-header" style="border-bottom-color:var(--price-color)"><h1 id="priceHeading_${id}">BRANCH ${bNum} PRICE ISSUES</h1></div><table class="main-table"><thead><tr><th style="width: 20%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 37%;">REASON STATUS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="priceTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL PRICE COMPLAINTS: <span id="priceTotalCount_${id}">0</span></span><span class="days-counter-badge" id="priceDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Price Compliance Audit • Confidential</div></div></div><div id="pageCust_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--cust-color)" onclick="downloadPDF()">Download Satisfaction PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'cust')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'cust')">CLEAR ALL</button></div><div id="custArea_${id}" class="report-preview-area cust-area"><div class="report-header" style="border-bottom-color:var(--cust-color)"><h1>BRANCH ${bNum} CUSTOMER SATISFACTION</h1></div><table class="main-table"><thead><tr><th style="width: 15%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 42%;">COMPLAINT DETAILS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="custTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL SATISFACTION COMPLAINTS: <span id="custTotalCount_${id}">0</span></span><span class="days-counter-badge" id="custDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Customer Matrix • Confidential</div></div></div><div id="pageStaff_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--staff-color)" onclick="downloadPDF()">Download Staff PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'staff')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'staff')">CLEAR ALL</button></div><div id="staffArea_${id}" class="report-preview-area staff-area"><div class="report-header" style="border-bottom-color:var(--staff-color)"><h1>BRANCH ${bNum} STAFF COMPLAINTS</h1></div><table class="main-table"><thead><tr><th style="width: 15%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 42%;">COMPLAINT DETAILS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="staffTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL STAFF COMPLAINTS: <span id="staffTotalCount_${id}">0</span></span><span class="days-counter-badge" id="staffDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Staff Performance Control • Confidential</div></div></div><div id="pageGrocery_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--groc-color)" onclick="downloadPDF()">Download Grocery PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'grocery')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'grocery')">CLEAR ALL</button></div><div id="groceryArea_${id}" class="report-preview-area groc-area"><div class="report-header" style="border-bottom-color:var(--groc-color)"><h1>BRANCH ${bNum} GROCERY COMPLAINTS</h1></div><table class="main-table"><thead><tr><th style="width: 20%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 37%;">REASON</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="groceryTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL GROCERY COMPLAINTS: <span id="groceryTotalCount_${id}">0</span></span><span class="days-counter-badge" id="groceryDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Grocery Dept Audit • Confidential</div></div></div><div id="pageFresho_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--fresh-color)" onclick="downloadPDF()">Download Fresho PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'fresho')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'fresho')">CLEAR ALL</button></div><div id="freshoArea_${id}" class="report-preview-area fresh-area"><div class="report-header" style="border-bottom-color:var(--fresh-color)"><h1>BRANCH ${bNum} FRESHO COMPLAINTS</h1></div><table class="main-table"><thead><tr><th style="width: 20%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 37%;">REASON</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="freshoTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL FRESHO COMPLAINTS: <span id="freshoTotalCount_${id}">0</span></span><span class="days-counter-badge" id="freshoDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Fresho Quality Logs • Confidential</div></div></div><div id="pageBill_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--bill-color)" onclick="downloadPDF()">Download Billing PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'bill')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'bill')">CLEAR ALL</button></div><div id="billArea_${id}" class="report-preview-area bill-area"><div class="report-header" style="border-bottom-color:var(--bill-color)"><h1>BRANCH ${bNum} BILLING COMPLAINTS</h1></div><table class="main-table"><thead><tr><th style="width: 15%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 42%;">COMPLAINT DETAILS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="billTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL BILLING COMPLAINTS: <span id="billTotalCount_${id}">0</span></span><span class="days-counter-badge" id="billDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Counter Transaction Logs • Confidential</div></div></div><div id="pageMaint_${id}" class="hidden"><div class="control-bar"><button class="action-btn btn-summary" style="width:220px; background:var(--maint-color)" onclick="downloadPDF()">Download Maintenance PDF</button><button class="action-btn btn-undo" onclick="undoLastEntry('${id}', 'maint')">UNDO LAST ENTRY</button><button class="action-btn btn-clear" onclick="clearSpecificData('${id}', 'maint')">CLEAR ALL</button></div><div id="maintArea_${id}" class="report-preview-area maint-area"><div class="report-header" style="border-bottom-color:var(--maint-color)"><h1>BRANCH ${bNum} MAINTENANCE COMPLAINTS</h1></div><table class="main-table"><thead><tr><th style="width: 15%;">DATE</th><th style="width: 25%;">PRODUCT</th><th style="width: 10%; text-align: center;">QTY</th><th style="width: 42%;">COMPLAINT DETAILS</th><th class="hide-on-download" style="width: 8%; text-align: center;">DEL</th></tr></thead><tbody id="maintTableBody_${id}"></tbody></table><div class="count-footer-wrapper"><span>TOTAL MAINTENANCE COMPLAINTS: <span id="maintTotalCount_${id}">0</span></span><span class="days-counter-badge" id="maintDaysCount_${id}">0 DAYS DATA</span></div><div class="footer-line">Maintenance System Logs • Confidential</div></div></div>`;
+    }
+
+    ['tab1', 'tab2', 'tab3', 'tab4'].forEach(tab => { document.getElementById(tab).innerHTML = buildBranchTemplate(tab); });
+
+    function switchPage(id, page) {
+        const pages = ['summary','monthly','major','demand','price','cust','staff','grocery','fresho','bill','maint'];
+        pages.forEach(p => {
+            const el = document.getElementById(`page${p.charAt(0).toUpperCase() + p.slice(1)}_${id}`);
+            if(el) el.classList.toggle('hidden', p !== page);
+        });
+        if(page === 'monthly') renderGroupedMonthlyTable(id);
+        else refreshAllBranchViews(id);
+    }
+
+    function normalizeText(str) { if (!str) return ""; let txt = str.trim().toLowerCase(); return txt.charAt(0).toUpperCase() + txt.slice(1); }
+
+    // Helper to parse DD/MM/YYYY to Date object for strict sorting
+    function parseCustomDate(dateStr) {
+        if(!dateStr) return new Date(0);
+        const parts = dateStr.split("/");
+        if(parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        return new Date(dateStr);
+    }
+
+    function processData(id) {
+        initStoreForBranch(id);
+        const heading = document.getElementById(`branchInput_${id}`).value || "ANALYSIS REPORT";
+        const rawDate = document.getElementById(`dateInput_${id}`).value;
+        const totalFb = parseInt(document.getElementById(`totalFeedbackInput_${id}`).value) || 0;
+        const bulkText = document.getElementById(`bulkInput_${id}`).value;
+        const remarks = document.getElementById(`goodCommentsInput_${id}`).value;
+        if (!rawDate) { alert("Please select a date!"); return; }
+        if (bulkText.trim() === "") { alert("Please input complaints data!"); return; }
+        const formattedDate = rawDate.split("-").reverse().join("/");
+        document.getElementById(`mainHeading_${id}`).innerText = heading;
+        document.getElementById(`outDate_${id}`).innerText = formattedDate;
+        document.getElementById(`outTotalAll_${id}`).innerText = totalFb;
+        document.getElementById(`outGoodComments_${id}`).innerText = remarks || "...";
+        const tbody = document.getElementById(`tableBody_${id}`); tbody.innerHTML = "";
+        const lines = bulkText.split("\n");
+        let categoriesOrder = [], dataMap = {};
+        let currentCategory = "", grocCount = 0, freshCount = 0, otherCount = 0;
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            if (!cleanLine) return;
+            if (!cleanLine.includes(".") && !cleanLine.includes("-") && !cleanLine.match(/^\d/)) {
+                currentCategory = normalizeText(cleanLine);
+                if (!categoriesOrder.includes(currentCategory)) categoriesOrder.push(currentCategory);
+                if (!dataMap[currentCategory]) dataMap[currentCategory] = {};
+                return;
+            }
+            cleanLine = cleanLine.replace(/^[-*\d]+\s*/, '');
+            let productPart = "", reasonPart = "";
+            if (cleanLine.includes(".")) {
+                let dotIdx = cleanLine.indexOf(".");
+                productPart = normalizeText(cleanLine.substring(0, dotIdx));
+                reasonPart = normalizeText(cleanLine.substring(dotIdx+1));
+            } else { productPart = normalizeText(cleanLine); reasonPart = "General issue"; }
+            if (!currentCategory) { currentCategory = "Others"; if (!categoriesOrder.includes(currentCategory)) categoriesOrder.push(currentCategory); if (!dataMap[currentCategory]) dataMap[currentCategory] = {}; }
+            let catLower = currentCategory.toLowerCase();
+            if(catLower.includes("grocery") || catLower.includes("groc")) grocCount++;
+            else if(catLower.includes("fresho") || catLower.includes("fresh")) freshCount++;
+            else otherCount++;
+            let key = `${productPart.toLowerCase()}||${reasonPart.toLowerCase()}`;
+            if (dataMap[currentCategory][key]) dataMap[currentCategory][key].qty += 1;
+            else dataMap[currentCategory][key] = { qty:1, originalProduct: productPart, originalReason: reasonPart };
+        });
+        let totalIssuesCount = 0;
+        for (let category of categoriesOrder) {
+            const combos = dataMap[category];
+            if (!combos || Object.keys(combos).length === 0) continue;
+            const productGroups = new Map();
+            for (let combo of Object.values(combos)) {
+                const prodNorm = combo.originalProduct.toLowerCase();
+                if (!productGroups.has(prodNorm)) productGroups.set(prodNorm, { product: combo.originalProduct, totalQty: 0, reasonsSet: new Set() });
+                const group = productGroups.has(prodNorm) ? productGroups.get(prodNorm) : null;
+                group.totalQty += combo.qty;
+                group.reasonsSet.add(combo.originalReason);
+                totalIssuesCount += combo.qty;
+                
+                globalDataStore[id].monthly.push({ date: formattedDate, product: combo.originalProduct, qty: combo.qty, reason: combo.originalReason });
+                let routeData = { product: combo.originalProduct, qty: combo.qty, reason: combo.originalReason };
+                let reasonLow = combo.originalReason.toLowerCase(), catLow = category.toLowerCase();
+                const pricePhrases = ["price expensive", "prices expensive", "price diff", "price issue", "price tags issue"];
+                let isPrice = pricePhrases.some(p => reasonLow.includes(p));
+                
+                if (isPrice) globalDataStore[id].price.push({ date: formattedDate, ...routeData });
+                else if (reasonLow.includes("unavailable") || reasonLow.includes("short") || reasonLow.includes("magwai")) globalDataStore[id].demand.push({ date: formattedDate, ...routeData });
+                else if (catLow.includes("grocery") || catLow.includes("groc")) globalDataStore[id].grocery.push({ date: formattedDate, ...routeData });
+                else if (catLow.includes("fresho") || catLow.includes("fresh")) globalDataStore[id].fresho.push({ date: formattedDate, ...routeData });
+                else if (catLow.includes("staff")) globalDataStore[id].staff.push({ date: formattedDate, ...routeData });
+                else if (catLow.includes("maintenance") || catLow.includes("maint")) globalDataStore[id].maint.push({ date: formattedDate, ...routeData });
+                else if (catLow.includes("satisfaction") || catLow.includes("sat") || combo.originalProduct.toLowerCase().includes("customer")) globalDataStore[id].cust.push({ date: formattedDate, ...routeData });
+                else if (catLow.includes("billing") || catLow.includes("bill")) globalDataStore[id].bill.push({ date: formattedDate, ...routeData });
+            }
+            tbody.innerHTML += `<tr class="category-heading"><td colspan="3">${category} Complaints</td></tr>`;
+            for (let group of productGroups.values()) {
+                let reasonsArray = Array.from(group.reasonsSet);
+                let displayReasons = reasonsArray.slice(0,4).join("; ");
+                if (reasonsArray.length > 4) displayReasons += ` +${reasonsArray.length-4} more`;
+                let highlightClass = group.totalQty > 2 ? 'class="high-complaint-row"' : '';
+                tbody.innerHTML += `<tr ${highlightClass}><td style="font-weight:800;">${group.product}</td><td style="text-align:center; font-weight:900; color:var(--accent);">${group.totalQty}</td><td>${displayReasons}</td></tr>`;
+                
+                if (group.totalQty > 2) {
+                    globalDataStore[id].major.push({ date: formattedDate, product: group.product, qty: group.totalQty, reason: displayReasons });
+                }
+            }
+        }
+        document.getElementById(`outTotalComplaints_${id}`).innerText = totalIssuesCount;
+        const score = totalFb > 0 ? Math.round(((totalFb - totalIssuesCount)/totalFb)*100) : 100;
+        document.getElementById(`outSatRate_${id}`).innerText = `${score}%`;
+        let grossSum = grocCount+freshCount+otherCount;
+        let grocPercent = grossSum?Math.round((grocCount/grossSum)*100):0, freshPercent = grossSum?Math.round((freshCount/grossSum)*100):0, otherPercent = grossSum?Math.round((otherCount/grossSum)*100):0;
+        document.getElementById(`percentageList_${id}`).innerHTML = `<div class="percent-item"><span>Grocery Complaints:</span><span>${grocPercent}%</span></div><div class="percent-item"><span>Fresho Complaints:</span><span>${freshPercent}%</span></div><div class="percent-item"><span>Others Complaints:</span><span>${otherPercent}%</span></div>`;
+        saveBranchToLocalStorage(id);
+        refreshAllBranchViews(id);
+        alert("Report processed! Yellow highlighted rows have been pushed to Major page successfully.");
+    }
+
+    function renderGroupedMonthlyTable(id) {
+        initStoreForBranch(id);
+        const store = globalDataStore[id];
+        const tbody = document.getElementById(`monthlyTableBody_${id}`);
+        const totalSpan = document.getElementById(`monthlyTotalCount_${id}`);
+        const daysSpan = document.getElementById(`monthlyDaysCount_${id}`);
+        if(!tbody) return;
+
+        // --- Logic 2: Sorting array before rendering ---
+        if (store.monthly) {
+            store.monthly.sort((a, b) => parseCustomDate(a.date) - parseCustomDate(b.date));
+        }
+
+        // --- Logic 1: Extract and Count Unique Dates ---
+        const uniqueDates = [...new Set(store.monthly.map(item => item.date))];
+        if (daysSpan) daysSpan.innerText = `${uniqueDates.length} DAYS DATA`;
+
+        const productMap = new Map();
+        for(let entry of store.monthly) {
+            let prodNorm = entry.product.toLowerCase();
+            if(!productMap.has(prodNorm)) productMap.set(prodNorm, { product: entry.product, totalQty: 0, reasonsSet: new Set(), datesSet: new Set() });
+            let group = productMap.get(prodNorm);
+            group.totalQty += entry.qty;
+            group.reasonsSet.add(entry.reason);
+            if(entry.date) group.datesSet.add(entry.date.split("/").slice(0,2).join("/"));
+        }
+        tbody.innerHTML = "";
+        let overallTotal = 0;
+        for(let group of productMap.values()) {
+            overallTotal += group.totalQty;
+            let reasonsArr = Array.from(group.reasonsSet);
+            let reasonsDisplay = reasonsArr.slice(0,4).join("; ");
+            if(reasonsArr.length > 4) reasonsDisplay += ` +${reasonsArr.length-4} more`;
+            let datesDisplay = Array.from(group.datesSet).map(d => `<span class="date-badge">${d}</span>`).join("");
+            let highlight = group.totalQty > 2 ? 'class="high-complaint-row"' : '';
+            tbody.innerHTML += `<tr ${highlight}><td>${datesDisplay}</td><td style="font-weight:800;">${group.product}</td><td style="text-align:center; font-weight:900;">${group.totalQty}</td><td>${reasonsDisplay}</td><td class="hide-on-download"><button class="btn-del-row" onclick="deleteMonthlyGroup('${id}', '${group.product.replace(/'/g, "\\'")}')">DEL</button></td></tr>`;
+        }
+        if(totalSpan) totalSpan.innerText = overallTotal;
+    }
+
+    function deleteMonthlyGroup(id, productName) {
+        if(confirm(`Delete ALL records for product "${productName}" from Monthly log?`)) {
+            initStoreForBranch(id);
+            globalDataStore[id].monthly = globalDataStore[id].monthly.filter(entry => entry.product.toLowerCase() !== productName.toLowerCase());
+            saveBranchToLocalStorage(id);
+            refreshAllBranchViews(id);
+        }
+    }
+
+    function renderAllTables(id) {
+        const store = globalDataStore[id];
+        const categories = ['staff','cust','bill','maint','major','demand','price','grocery','fresho'];
+        categories.forEach(cat => {
+            const body = document.getElementById(`${cat}TableBody_${id}`);
+            const counter = document.getElementById(`${cat}TotalCount_${id}`);
+            const daysSpan = document.getElementById(`${cat}DaysCount_${id}`);
+            if(!body) return;
+            const items = store[cat] || [];
+
+            // --- Logic 2: Sequence dates automatically (1, 2, 3...) ---
+            items.sort((a, b) => parseCustomDate(a.date) - parseCustomDate(b.date));
+
+            // --- Logic 1: Days Counter for specific categories ---
+            const uniqueDates = [...new Set(items.map(item => item.date))];
+            if (daysSpan) daysSpan.innerText = `${uniqueDates.length} DAYS DATA`;
+
+            body.innerHTML = "";
+            let total = 0;
+            items.forEach((item, idx) => {
+                total += item.qty;
+                body.innerHTML += `<tr><td>${item.date || ''}</td><td>${item.product}</td><td style="text-align:center;">${item.qty}</td><td>${item.reason}</td><td class="hide-on-download"><button class="btn-del-row" onclick="deleteRoutedRow('${id}','${cat}',${idx})">DEL</button></td></tr>`;
+            });
+            if(counter) counter.innerText = total;
+        });
+    }
+
+    function deleteRoutedRow(id, pageName, index) {
+        if(confirm("Delete this record?")) {
+            initStoreForBranch(id);
+            if(globalDataStore[id][pageName] && globalDataStore[id][pageName][index]) {
+                globalDataStore[id][pageName].splice(index,1);
+                saveBranchToLocalStorage(id);
+                refreshAllBranchViews(id);
+            }
+        }
+    }
+
+    function undoLastEntry(id, page) {
+        initStoreForBranch(id);
+        if(globalDataStore[id][page]?.length) {
+            globalDataStore[id][page].pop();
+            saveBranchToLocalStorage(id);
+            refreshAllBranchViews(id);
+            alert(`Last entry removed from ${page}`);
+        } else alert("No entries to undo.");
+    }
+
+    function clearSpecificData(id, page) {
+        if(confirm(`Clear all ${page} data?`)) {
+            initStoreForBranch(id);
+            globalDataStore[id][page] = [];
+            saveBranchToLocalStorage(id);
+            refreshAllBranchViews(id);
+        }
+    }
+
+    function loadAllBranches() {
+        ['tab1','tab2','tab3','tab4'].forEach(tab => {
+            loadBranchFromLocalStorage(tab);
+            refreshAllBranchViews(tab);
+        });
+    }
+
+    function switchFbPage(pageType) { document.getElementById('fbPageMpk').classList.toggle('hidden', pageType !== 'mpk'); document.getElementById('fbPageHyd').classList.toggle('hidden', pageType !== 'hyd'); renderFbTables(); }
+    function processFbData() { const targetPage = document.getElementById('fbTargetPage').value; const rawDate = document.getElementById('fbDateInput').value; const fbStatus = document.getElementById('fbStatusInput').value; if(!rawDate) { alert("Select date!"); return; } const fbDate = rawDate.split("-").reverse().join("/"); const extractedMonth = rawDate.split("-")[1]; let dataStore = JSON.parse(localStorage.getItem(`fb_${targetPage}_data`)||[]); dataStore.push({ rawDateValue:rawDate, date:fbDate, month:extractedMonth, city:targetPage.toUpperCase(), status:fbStatus }); localStorage.setItem(`fb_${targetPage}_data`, JSON.stringify(dataStore)); renderFbTables(); alert("Facebook Entry Saved"); }
+    function renderFbTables() { const mpkBody = document.getElementById('fbMpkTableBody'); let mpkData = JSON.parse(localStorage.getItem('fb_mpk_data')||[]); mpkData.sort((a,b)=>new Date(a.rawDateValue)-new Date(b.rawDateValue)); let mpkUploads=0,mpkUnuploads=0; mpkBody.innerHTML=""; mpkData.forEach((item,idx)=>{ if(item.status==='Uploaded') mpkUploads++; else mpkUnuploads++; mpkBody.innerHTML+=`<tr><td>${item.date}</td><td>MPK Page</td><td style="text-align:center"><button class="status-toggle-btn ${item.status==='Uploaded'?'status-uploaded':'status-unuploaded'}" onclick="toggleFbStatus('mpk',${idx})">${item.status}</button></td><td class="hide-on-download"><button class="btn-del-row" onclick="deleteFbRow('mpk',${idx})">DEL</button></td></tr>`; }); document.getElementById('mpkUploadCount').innerText=mpkUploads; document.getElementById('mpkUnuploadCount').innerText=mpkUnuploads; const hydBody = document.getElementById('fbHydTableBody'); let hydData = JSON.parse(localStorage.getItem('fb_hyd_data')||[]); hydData.sort((a,b)=>new Date(a.rawDateValue)-new Date(b.rawDateValue)); let hydUploads=0,hydUnuploads=0; hydBody.innerHTML=""; hydData.forEach((item,idx)=>{ if(item.status==='Uploaded') hydUploads++; else hydUnuploads++; hydBody.innerHTML+=`<tr><td>${item.date}</td><td>HYD Page</td><td style="text-align:center"><button class="status-toggle-btn ${item.status==='Uploaded'?'status-uploaded':'status-unuploaded'}" onclick="toggleFbStatus('hyd',${idx})">${item.status}</button></td><td class="hide-on-download"><button class="btn-del-row" onclick="deleteFbRow('hyd',${idx})">DEL</button></td></tr>`; }); document.getElementById('hydUploadCount').innerText=hydUploads; document.getElementById('hydUnuploadCount').innerText=hydUnuploads; }
+    function toggleFbStatus(pageType, idx) { let data = JSON.parse(localStorage.getItem(`fb_${pageType}_data`)||[]); data.sort((a,b)=>new Date(a.rawDateValue)-new Date(b.rawDateValue)); data[idx].status = data[idx].status==='Uploaded'?'Unuploaded':'Uploaded'; localStorage.setItem(`fb_${pageType}_data`, JSON.stringify(data)); renderFbTables(); }
+    function deleteFbRow(pageType, idx) { if(confirm("Delete entry?")) { let data = JSON.parse(localStorage.getItem(`fb_${pageType}_data`)||[]); data.sort((a,b)=>new Date(a.rawDateValue)-new Date(b.rawDateValue)); data.splice(idx,1); localStorage.setItem(`fb_${pageType}_data`, JSON.stringify(data)); renderFbTables(); } }
+    function undoLastFbEntry(pageType) { let data = JSON.parse(localStorage.getItem(`fb_${pageType}_data`)||[]); if(data.length) { data.pop(); localStorage.setItem(`fb_${pageType}_data`, JSON.stringify(data)); renderFbTables(); alert("Last entry undone"); } else alert("No entries"); }
+    function clearFbData(pageType) { if(confirm(`Clear all ${pageType} data?`)) { localStorage.removeItem(`fb_${pageType}_data`); renderFbTables(); } }
+    function downloadImage(elementId) { const el = document.getElementById(elementId); const del = el.querySelectorAll('.hide-on-download'); del.forEach(d=>d.style.display='none'); html2canvas(el, { scale:2, backgroundColor:"#ffffff" }).then(canvas=>{ const link=document.createElement('a'); link.download=`${elementId}.png`; link.href=canvas.toDataURL(); link.click(); del.forEach(d=>d.style.display=''); }).catch(()=>del.forEach(d=>d.style.display='')); }
+    function downloadPDF() { window.print(); }
+    function openTab(evt, tabName) { [...document.getElementsByClassName("tab-content")].forEach(c => c.classList.remove("active")); [...document.getElementsByClassName("tab-btn")].forEach(b => b.classList.remove("active")); document.getElementById(tabName).classList.add("active"); evt.currentTarget.classList.add("active"); if (tabName === 'tabFacebook') renderFbTables(); else { const activeTab = ['tab1','tab2','tab3','tab4'].find(t => t === tabName); if(activeTab) refreshAllBranchViews(activeTab); } }
+
+    loadAllBranches();
+</script>
+</body>
+</html>
